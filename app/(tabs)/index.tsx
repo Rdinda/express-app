@@ -1,75 +1,181 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+import { ExecucaoCard } from '@/src/components/ExecucaoCard';
+import { Execucao } from '@/src/models/types';
+import { StorageService } from '@/src/services/storageService';
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
+  const [execucoes, setExecucoes] = useState<Execucao[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { state: syncState, sincronizarExecucoes } = useSync();
+
+  // Carregar execuções ao montar o componente
+  useEffect(() => {
+    carregarExecucoes();
+  }, []);
+
+  // Função para carregar execuções do armazenamento local
+  const carregarExecucoes = async () => {
+    setIsLoading(true);
+    try {
+      const dados = await StorageService.obterExecucoes();
+      setExecucoes(dados);
+    } catch (error) {
+      console.error('Erro ao carregar execuções:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para navegar para a tela de detalhes da execução
+  const navegarParaDetalhes = (execucao: Execucao) => {
+    // Implementação futura: navegação para detalhes
+    console.log('Navegar para detalhes:', execucao.id);
+  };
+
+  // Função para navegar para a tela de nova execução
+  const navegarParaNovaExecucao = () => {
+    router.push('/nova-execucao');
+  };
+
+  // Função para sincronizar execuções pendentes
+  const sincronizar = async () => {
+    await sincronizarExecucoes();
+    carregarExecucoes(); // Recarregar após sincronização
+  };
+
+  // Renderizar item da lista
+  const renderItem = ({ item }: { item: Execucao }) => (
+    <ExecucaoCard execucao={item} onPress={navegarParaDetalhes} />
+  );
+
+  // Renderizar mensagem quando não há execuções
+  const renderEmpty = () => (
+    <ThemedView style={styles.emptyContainer}>
+      <IconSymbol name="doc.text" size={50} color="#ccc" />
+      <ThemedText style={styles.emptyText}>
+        Nenhuma execução encontrada
+      </ThemedText>
+      <ThemedText>
+        Clique no botão + para adicionar uma nova execução
+      </ThemedText>
+    </ThemedView>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+    <ThemedView style={styles.container}>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title">Execuções</ThemedText>
+        <TouchableOpacity onPress={sincronizar} disabled={!syncState.isConnected || syncState.isSyncing}>
+          <ThemedView style={styles.syncButton}>
+            <IconSymbol
+              name="arrow.clockwise"
+              size={20}
+              color={syncState.isConnected ? '#007AFF' : '#ccc'}
+            />
+            {syncState.isSyncing && (
+              <ThemedText style={styles.syncText}>Sincronizando...</ThemedText>
+            )}
+          </ThemedView>
+        </TouchableOpacity>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+
+      {syncState.pendingCount > 0 && (
+        <ThemedView style={styles.pendingBanner}>
+          <IconSymbol name="exclamationmark.circle" size={16} color="#FF9500" />
+          <ThemedText style={styles.pendingText}>
+            {syncState.pendingCount} {syncState.pendingCount === 1 ? 'execução pendente' : 'execuções pendentes'} de sincronização
+          </ThemedText>
+        </ThemedView>
+      )}
+
+      <FlatList
+        data={execucoes}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        refreshing={isLoading}
+        onRefresh={carregarExecucoes}
+        ListEmptyComponent={renderEmpty}
+      />
+
+      <TouchableOpacity style={styles.fab} onPress={navegarParaNovaExecucao}>
+        <IconSymbol name="plus" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  syncButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    padding: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  syncText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#007AFF',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  pendingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9E6',
+    padding: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9500',
+  },
+  pendingText: {
+    marginLeft: 8,
+    color: '#996300',
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: 80,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    marginVertical: 10,
+  },
+  fab: {
     position: 'absolute',
+    width: 56,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 28,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
   },
 });
