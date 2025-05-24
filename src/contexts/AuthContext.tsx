@@ -1,193 +1,96 @@
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useReducer } from 'react';
-import { AuthData, LoginCredentials, RegisterData, Usuario } from '../models/types';
 
-// Definição das ações do reducer
-type AuthAction =
-    | { type: 'RESTORE_TOKEN'; token: string; usuario: Usuario }
-    | { type: 'SIGN_IN'; token: string; usuario: Usuario }
-    | { type: 'SIGN_OUT' }
-    | { type: 'AUTH_ERROR'; error: string }
-    | { type: 'CLEAR_ERROR' }
-    | { type: 'LOADING'; isLoading: boolean };
+interface AuthContextState {
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  userToken: string | null;
+  login: (token: string) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (data: any) => Promise<void>; // Can be any for mock
+}
 
-// Estado inicial de autenticação
-const initialState: AuthData = {
-    usuario: null,
-    isLoading: true,
-    isSignout: false,
-    error: null,
-};
+const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
-// Reducer para gerenciar o estado de autenticação
-const authReducer = (state: AuthData, action: AuthAction): AuthData => {
-    switch (action.type) {
-        case 'RESTORE_TOKEN':
-            return {
-                ...state,
-                usuario: action.usuario,
-                isLoading: false,
-                isSignout: false,
-            };
-        case 'SIGN_IN':
-            return {
-                ...state,
-                usuario: action.usuario,
-                isLoading: false,
-                isSignout: false,
-                error: null,
-            };
-        case 'SIGN_OUT':
-            return {
-                ...state,
-                usuario: null,
-                isLoading: false,
-                isSignout: true,
-                error: null,
-            };
-        case 'AUTH_ERROR':
-            return {
-                ...state,
-                error: action.error,
-                isLoading: false,
-            };
-        case 'CLEAR_ERROR':
-            return {
-                ...state,
-                error: null,
-            };
-        case 'LOADING':
-            return {
-                ...state,
-                isLoading: action.isLoading,
-            };
-        default:
-            return state;
-    }
-};
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-// Definição do contexto de autenticação
-type AuthContextType = {
-    state: AuthData;
-    signIn: (credentials: LoginCredentials) => Promise<void>;
-    signOut: () => Promise<void>;
-    signUp: (data: RegisterData) => Promise<void>;
-    clearError: () => void;
-};
+const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userToken, setUserToken] = useState<string | null>(null);
 
-// Criação do contexto
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+  useEffect(() => {
+    // Check for a token in AsyncStorage on app start
+    const bootstrapAsync = async () => {
+      let token: string | null = null;
+      try {
+        token = await AsyncStorage.getItem('userToken');
+      } catch (e) {
+        // Restoring token failed
+        console.error('Failed to load token from storage', e);
+      }
 
-// Provider do contexto de autenticação
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [state, dispatch] = useReducer(authReducer, initialState);
-
-    // Efeito para verificar se há um token salvo
-    useEffect(() => {
-        const bootstrapAsync = async () => {
-            try {
-                // Recuperar token e dados do usuário do AsyncStorage
-                const userToken = await AsyncStorage.getItem('@auth_token');
-                const userData = await AsyncStorage.getItem('@user_data');
-
-                if (userToken && userData) {
-                    const usuario = JSON.parse(userData) as Usuario;
-                    dispatch({ type: 'RESTORE_TOKEN', token: userToken, usuario });
-                } else {
-                    dispatch({ type: 'SIGN_OUT' });
-                }
-            } catch (e) {
-                // Erro ao recuperar token
-                dispatch({ type: 'SIGN_OUT' });
-            }
-        };
-
-        bootstrapAsync();
-    }, []);
-
-    // Funções de autenticação
-    const authContext: AuthContextType = {
-        state,
-        signIn: async (credentials) => {
-            try {
-                dispatch({ type: 'LOADING', isLoading: true });
-
-                // Simulação de chamada à API (será substituída pela integração real)
-                // Em produção, isso seria uma chamada real à API
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                if (credentials.email === 'teste@exemplo.com' && credentials.senha === '123456') {
-                    const usuario: Usuario = {
-                        id: '1',
-                        nome: 'Usuário Teste',
-                        email: credentials.email,
-                        token: 'token-fake-123',
-                    };
-
-                    // Salvar token e dados do usuário no AsyncStorage
-                    await AsyncStorage.setItem('@auth_token', 'token-fake-123');
-                    await AsyncStorage.setItem('@user_data', JSON.stringify(usuario));
-
-                    dispatch({ type: 'SIGN_IN', token: 'token-fake-123', usuario });
-                } else {
-                    dispatch({ type: 'AUTH_ERROR', error: 'Credenciais inválidas' });
-                }
-            } catch (error) {
-                dispatch({ type: 'AUTH_ERROR', error: 'Erro ao fazer login. Tente novamente.' });
-            }
-        },
-        signOut: async () => {
-            try {
-                // Remover token e dados do usuário do AsyncStorage
-                await AsyncStorage.removeItem('@auth_token');
-                await AsyncStorage.removeItem('@user_data');
-                dispatch({ type: 'SIGN_OUT' });
-            } catch (error) {
-                console.error('Erro ao fazer logout:', error);
-            }
-        },
-        signUp: async (data) => {
-            try {
-                dispatch({ type: 'LOADING', isLoading: true });
-
-                // Validar dados de registro
-                if (data.senha !== data.confirmarSenha) {
-                    dispatch({ type: 'AUTH_ERROR', error: 'As senhas não coincidem' });
-                    return;
-                }
-
-                // Simulação de chamada à API (será substituída pela integração real)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                const usuario: Usuario = {
-                    id: '2', // Em produção, seria gerado pelo backend
-                    nome: data.nome,
-                    email: data.email,
-                    token: 'token-fake-456',
-                };
-
-                // Salvar token e dados do usuário no AsyncStorage
-                await AsyncStorage.setItem('@auth_token', 'token-fake-456');
-                await AsyncStorage.setItem('@user_data', JSON.stringify(usuario));
-
-                dispatch({ type: 'SIGN_IN', token: 'token-fake-456', usuario });
-            } catch (error) {
-                dispatch({ type: 'AUTH_ERROR', error: 'Erro ao criar conta. Tente novamente.' });
-            }
-        },
-        clearError: () => {
-            dispatch({ type: 'CLEAR_ERROR' });
-        },
+      if (token) {
+        setUserToken(token);
+        setIsAuthenticated(true);
+      }
+      setIsLoading(false);
     };
 
-    return <AuthContext.Provider value={authContext}>{children}</AuthContext.Provider>;
+    bootstrapAsync();
+  }, []);
+
+  const login = async (token: string) => {
+    setIsLoading(true);
+    try {
+      await AsyncStorage.setItem('userToken', token);
+      setUserToken(token);
+      setIsAuthenticated(true);
+    } catch (e) {
+      console.error('Failed to save token to storage', e);
+      // Handle error, maybe show a message to the user
+    }
+    setIsLoading(false);
+  };
+
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await AsyncStorage.removeItem('userToken');
+      setUserToken(null);
+      setIsAuthenticated(false);
+    } catch (e) {
+      console.error('Failed to remove token from storage', e);
+      // Handle error
+    }
+    setIsLoading(false);
+  };
+
+  const register = async (data: any) => {
+    setIsLoading(true);
+    console.log('Registering user with data:', data);
+    // Mock registration: In a real app, this would involve an API call.
+    // For this mock, let's simulate a successful registration by logging in the user.
+    // This is a simplified mock; a real scenario would be more complex.
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network request
+    // Assuming registration is successful, we might automatically log the user in
+    // or require them to log in manually. For this mock, let's set a dummy token.
+    const mockToken = 'mock-registered-user-token';
+    await login(mockToken); 
+    // Or, if registration doesn't auto-login:
+    // setIsAuthenticated(false); 
+    // setUserToken(null);
+    setIsLoading(false);
+    // Potentially navigate to login screen or dashboard after registration
+  };
+
+  return (
+    <AuthContext.Provider value={{ isLoading, isAuthenticated, userToken, login, logout, register }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// Hook para usar o contexto de autenticação
-export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth deve ser usado dentro de um AuthProvider');
-    }
-    return context;
-};
+export { AuthContext, AuthProvider };

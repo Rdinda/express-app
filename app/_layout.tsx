@@ -1,20 +1,47 @@
-import { Slot } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { Slot, useRouter, useSegments } from 'expo-router';
+import { PaperProvider } from 'react-native-paper';
+import { AuthProvider, useAuth } from '../src/contexts/AuthContext'; // Adjusted path
+import theme from '../src/theme/theme'; // Import the custom theme
 
-import { AuthProvider } from '@/src/contexts/AuthContext';
-import { SyncProvider } from '@/src/contexts/SyncContext';
+// Main layout component that decides which navigator to show
+const MainLayout = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
+  useEffect(() => {
+    if (isLoading) return; 
 
+    const inAuthGroup = segments[0] === '(auth)';
+    const inAppGroup = segments[0] === '(app)';
+
+    if (isAuthenticated && !inAppGroup) {
+      router.replace('/(app)'); 
+    } else if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login'); 
+    }
+  }, [isAuthenticated, isLoading, segments, router]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  return <Slot />;
+};
+
+// Root layout wraps everything with PaperProvider and AuthProvider
 export default function RootLayout() {
-  const colorScheme = useColorScheme() ?? 'light';
-
   return (
-    <AuthProvider>
-      <SyncProvider>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Slot />
-      </SyncProvider>
-    </AuthProvider>
+    <PaperProvider theme={theme}>
+      <AuthProvider>
+        <MainLayout />
+      </AuthProvider>
+    </PaperProvider>
   );
 }
