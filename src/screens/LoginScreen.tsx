@@ -1,8 +1,8 @@
-import React, { useState, useContext } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
-import { AuthContext } from '../../contexts/AuthContext';
-import { login as apiLogin } from '../../api/authService';
+import { login as apiLogin } from '../../src/api/authService';
+import { AuthContext } from '../../src/contexts/AuthContext';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
@@ -42,7 +42,7 @@ const LoginScreen = () => {
         // or if contextLoginAction is somehow undefined (already checked by !authContext)
         setError('Login failed: No token received or context action unavailable.');
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'An unexpected error occurred during login.';
       setError(errorMessage);
       console.error('Login failed:', err);

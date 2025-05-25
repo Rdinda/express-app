@@ -1,3 +1,4 @@
+import { useSync } from '@/src/contexts/SyncContext';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
@@ -71,12 +72,12 @@ export default function DashboardScreen() {
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="title">Execuções</ThemedText>
-        <TouchableOpacity onPress={sincronizar} disabled={!syncState.isConnected || syncState.isSyncing}>
+        <TouchableOpacity onPress={sincronizar} disabled={!syncState.isOnline || syncState.isSyncing}>
           <ThemedView style={styles.syncButton}>
             <IconSymbol
               name="arrow.clockwise"
               size={20}
-              color={syncState.isConnected ? '#007AFF' : '#ccc'}
+              color={syncState.isOnline ? '#007AFF' : '#ccc'}
             />
             {syncState.isSyncing && (
               <ThemedText style={styles.syncText}>Sincronizando...</ThemedText>
@@ -85,11 +86,11 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       </ThemedView>
 
-      {syncState.pendingCount > 0 && (
+      {syncState.pendingItems > 0 && (
         <ThemedView style={styles.pendingBanner}>
           <IconSymbol name="exclamationmark.circle" size={16} color="#FF9500" />
           <ThemedText style={styles.pendingText}>
-            {syncState.pendingCount} {syncState.pendingCount === 1 ? 'execução pendente' : 'execuções pendentes'} de sincronização
+            {syncState.pendingItems} {syncState.pendingItems === 1 ? 'execução pendente' : 'execuções pendentes'} de sincronização
           </ThemedText>
         </ThemedView>
       )}

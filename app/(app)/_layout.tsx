@@ -1,12 +1,12 @@
+import { useAuth } from '@/src/contexts/AuthContext'; // Adjusted path
+import { Redirect, Stack } from 'expo-router';
 import React from 'react';
-import { Stack, Redirect } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext'; // Adjusted path
 
 export default function AppStackLayout() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return null; 
+    return null;
   }
 
   if (!isAuthenticated) {
@@ -15,16 +15,16 @@ export default function AppStackLayout() {
 
   return (
     <Stack>
-      <Stack.Screen 
+      <Stack.Screen
         name="(tabs)" // This refers to the directory app/(app)/(tabs)
-        options={{ headerShown: false }} 
+        options={{ headerShown: false }}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="new-record" // This refers to app/(app)/new-record.tsx
-        options={{ 
+        options={{
           title: 'Novo Registro',
           // You might want to add presentation: 'modal' for a modal look
-        }} 
+        }}
       />
     </Stack>
   );

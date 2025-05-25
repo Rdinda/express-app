@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { useSync } from '../../../src/contexts/SyncContext';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useSync } from '../src/contexts/SyncContext';
 
 export default function PendingScreen() {
   const { state } = useSync();

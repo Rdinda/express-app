@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react'; // Added useCallback
+import { Execucao, SyncState } from '@/src/models/types'; // Added Execucao
+import { StorageService } from '@/src/services/storageService';
 import NetInfo from '@react-native-community/netinfo';
-import { SyncState, Execucao } from '../models/types'; // Added Execucao
-import { StorageService } from '../services/storageService';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useReducer } from 'react'; // Added useCallback
 
 // Definição das ações do reducer
 type SyncAction =
