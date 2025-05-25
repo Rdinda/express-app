@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface AuthContextState {
   isLoading: boolean;
@@ -78,7 +78,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Assuming registration is successful, we might automatically log the user in
     // or require them to log in manually. For this mock, let's set a dummy token.
     const mockToken = 'mock-registered-user-token';
-    await login(mockToken); 
+    await login(mockToken);
     // Or, if registration doesn't auto-login:
     // setIsAuthenticated(false); 
     // setUserToken(null);
@@ -93,4 +93,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-export { AuthContext, AuthProvider };
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export { AuthContext, AuthProvider, useAuth };
+
