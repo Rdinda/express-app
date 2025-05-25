@@ -4,7 +4,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Execucao } from '@/src/models/types';
 import { StorageService } from '@/src/services/storageService';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -266,3 +266,23 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
 });
+
+export const useSync = () => {
+    const [state, setState] = useState({ isConnected: false });
+
+    // Lógica para verificar a conexão e atualizar o estado
+    useEffect(() => {
+        const checkConnection = () => {
+            // Lógica para verificar a conexão
+            setState({ isConnected: true }); // Exemplo
+        };
+
+        checkConnection();
+    }, []);
+
+    const atualizarPendingCount = async () => {
+        // Lógica para atualizar a contagem de pendentes
+    };
+
+    return { state, atualizarPendingCount };
+};

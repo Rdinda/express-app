@@ -1,10 +1,10 @@
+import { AuthProvider, useAuth } from '@/src/contexts/AuthContext'; // Adjusted path
+import { SyncProvider } from '@/src/contexts/SyncContext'; // Import SyncProvider
+import theme from '@/src/theme/theme'; // Import the custom theme
+import { Slot, useRouter, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Slot, useRouter, useSegments } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
-import { AuthProvider, useAuth } from '../src/contexts/AuthContext'; // Adjusted path
-import { SyncProvider } from '../src/contexts/SyncContext'; // Import SyncProvider
-import theme from '../src/theme/theme'; // Import the custom theme
 
 // Main layout component that decides which navigator to show
 const MainLayout = () => {
@@ -13,15 +13,14 @@ const MainLayout = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return; 
+    if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inAppGroup = segments[0] === '(app)';
-
     if (isAuthenticated && !inAppGroup) {
-      router.replace('/(app)'); 
+      router.replace('/');
     } else if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/(auth)/login'); 
+      router.replace('/(auth)/login');
     }
   }, [isAuthenticated, isLoading, segments, router]);
 
