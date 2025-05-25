@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext'; // Adjusted path
+import { SyncProvider } from '../src/contexts/SyncContext'; // Import SyncProvider
 import theme from '../src/theme/theme'; // Import the custom theme
 
 // Main layout component that decides which navigator to show
@@ -40,7 +41,9 @@ export default function RootLayout() {
   return (
     <PaperProvider theme={theme}>
       <AuthProvider>
-        <MainLayout />
+        <SyncProvider>
+          <MainLayout />
+        </SyncProvider>
       </AuthProvider>
     </PaperProvider>
   );
